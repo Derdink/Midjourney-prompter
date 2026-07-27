@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   buildCharacterBlock,
+  combineNoTags,
   compositionFraming,
 } from "../app/prompt-structure.mjs";
 
@@ -51,11 +52,16 @@ test("keeps primary character details before additional characters without dupli
   assert.equal(prompt.match(/Weathered green cloak and dark braided hair\./g)?.length, 1);
 });
 
-test("adds explicit uncropped head-to-feet framing for full-body compositions", () => {
+test("adds compact head-to-toe framing for full-body compositions", () => {
   const framing = compositionFraming("Full-body character");
 
-  assert.match(framing, /top of the head to both feet/i);
-  assert.match(framing, /both feet fully inside the frame/i);
-  assert.match(framing, /no cropping/i);
+  assert.equal(framing, "Full-body head-to-toe view with both feet visible.");
   assert.equal(compositionFraming("Character portrait"), "");
+});
+
+test("appends additional no tags without duplicates", () => {
+  assert.equal(
+    combineNoTags("photorealism, text, watermark", "cropped feet, text"),
+    "photorealism, text, watermark, cropped feet",
+  );
 });

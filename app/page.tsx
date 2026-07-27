@@ -1,7 +1,11 @@
 "use client";
 
 import { ChangeEvent, useMemo, useRef, useState } from "react";
-import { buildCharacterBlock, compositionFraming } from "./prompt-structure.mjs";
+import {
+  buildCharacterBlock,
+  combineNoTags,
+  compositionFraming,
+} from "./prompt-structure.mjs";
 
 type SourceMode = "concept" | "image";
 type AnalysisMode = "likeness" | "reproduce" | "copy";
@@ -304,6 +308,7 @@ export default function Home() {
     "Weathered green cloak, silver leaf-shaped clasp, dark braided hair, scar across one cheek"
   );
   const [avoid, setAvoid] = useState("photorealism, 3D render, text, watermark");
+  const [additionalAvoid, setAdditionalAvoid] = useState("");
   const [ratio, setRatio] = useState("3:2");
   const [stylize, setStylize] = useState(80);
   const [raw, setRaw] = useState(true);
@@ -374,12 +379,13 @@ export default function Home() {
     ]
       .filter(Boolean)
       .join(" ");
+    const noTags = combineNoTags(avoid, additionalAvoid);
     const params = [
       `--ar ${ratio}`,
       raw ? "--raw" : "",
       `--s ${stylize}`,
       quality === "sd" ? "--sd" : "",
-      avoid.trim() ? `--no ${avoid.trim()}` : "",
+      noTags ? `--no ${noTags}` : "",
       "--v 8.2",
     ]
       .filter(Boolean)
@@ -406,6 +412,7 @@ export default function Home() {
       .trim();
   }, [
     action,
+    additionalAvoid,
     avoid,
     composition,
     concept,
@@ -942,8 +949,19 @@ export default function Home() {
             </label>
 
             <label>
-              <span>Suppress only after positive prompting</span>
+              <span>Base --no tags</span>
               <textarea rows={2} value={avoid} onChange={(event) => setAvoid(event.target.value)} />
+            </label>
+
+            <label>
+              <span>Additional --no tags</span>
+              <textarea
+                rows={2}
+                value={additionalAvoid}
+                onChange={(event) => setAdditionalAvoid(event.target.value)}
+                placeholder="e.g. extra limbs, cropped feet"
+              />
+              <small>Comma-separated tags are appended without duplicating existing exclusions.</small>
             </label>
           </div>
 

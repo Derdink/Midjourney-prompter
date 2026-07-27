@@ -10,6 +10,17 @@ export function buildCharacterBlock(primaryParts, groupIntroduction, additionalC
 
 export function compositionFraming(composition) {
   return composition === "Full-body character"
-    ? "Full-length head-to-toe framing, the entire character visible from the top of the head to both feet, both feet fully inside the frame, no cropping."
+    ? "Full-body head-to-toe view with both feet visible."
     : "";
+}
+
+export function combineNoTags(...tagGroups) {
+  return [
+    ...new Set(
+      tagGroups
+        .flatMap((group) => group.split(","))
+        .map((tag) => tag.trim())
+        .filter(Boolean)
+    ),
+  ].join(", ");
 }
