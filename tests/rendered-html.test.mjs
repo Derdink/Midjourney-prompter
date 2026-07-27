@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   buildCharacterBlock,
-  combineNoTags,
   compositionFraming,
 } from "../app/prompt-structure.mjs";
 
@@ -57,11 +56,4 @@ test("adds compact head-to-toe framing for full-body compositions", () => {
 
   assert.equal(framing, "Full-body head-to-toe view with both feet visible.");
   assert.equal(compositionFraming("Character portrait"), "");
-});
-
-test("appends additional no tags without duplicates", () => {
-  assert.equal(
-    combineNoTags("photorealism, text, watermark", "cropped feet, text"),
-    "photorealism, text, watermark, cropped feet",
-  );
 });

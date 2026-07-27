@@ -45,6 +45,7 @@ const lightingOptions = [
   "Soft frontal key light",
   "Diffused source-free light",
   "Bright diffused daylight",
+  "Harsh light",
   "Dim frontal light",
   "Torch or flame light",
   "Coloured ambient light",

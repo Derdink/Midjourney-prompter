@@ -13,14 +13,3 @@ export function compositionFraming(composition) {
     ? "Full-body head-to-toe view with both feet visible."
     : "";
 }
-
-export function combineNoTags(...tagGroups) {
-  return [
-    ...new Set(
-      tagGroups
-        .flatMap((group) => group.split(","))
-        .map((tag) => tag.trim())
-        .filter(Boolean)
-    ),
-  ].join(", ");
-}

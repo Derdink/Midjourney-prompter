@@ -3,7 +3,6 @@
 import { ChangeEvent, useMemo, useRef, useState } from "react";
 import {
   buildCharacterBlock,
-  combineNoTags,
   compositionFraming,
 } from "./prompt-structure.mjs";
 
@@ -228,6 +227,13 @@ const lightingPresets: Record<string, LightingPreset> = {
     environment:
       "Bright overcast daylight evenly illuminates the scene with soft open shadows",
   },
+  "Harsh light": {
+    name: "Harsh light",
+    character:
+      "Harsh direct frontal light creates crisp high-contrast definition while keeping the entire face, eyes and facial features clearly readable",
+    environment:
+      "Harsh direct light creates stark contrast and hard-edged shadows across the scene",
+  },
   "Dim frontal light": {
     name: "Dim frontal light",
     character:
@@ -327,8 +333,9 @@ export default function Home() {
   const [details, setDetails] = useState(
     "Weathered green cloak, silver leaf-shaped clasp, dark braided hair, scar across one cheek"
   );
-  const [avoid, setAvoid] = useState("photorealism, 3D render, text, watermark");
-  const [additionalAvoid, setAdditionalAvoid] = useState("");
+  const [avoid, setAvoid] = useState(
+    "photorealism, 3D render, text, watermark, backlight, back light, shadows on face"
+  );
   const [ratio, setRatio] = useState("3:2");
   const [stylize, setStylize] = useState(80);
   const [raw, setRaw] = useState(true);
@@ -400,13 +407,12 @@ export default function Home() {
     ]
       .filter(Boolean)
       .join(" ");
-    const noTags = combineNoTags(avoid, additionalAvoid);
     const params = [
       `--ar ${ratio}`,
       raw ? "--raw" : "",
       `--s ${stylize}`,
       quality === "sd" ? "--sd" : "",
-      noTags ? `--no ${noTags}` : "",
+      avoid.trim() ? `--no ${avoid.trim()}` : "",
       "--v 8.2",
     ]
       .filter(Boolean)
@@ -433,7 +439,6 @@ export default function Home() {
       .trim();
   }, [
     action,
-    additionalAvoid,
     avoid,
     composition,
     concept,
@@ -977,19 +982,9 @@ export default function Home() {
             </label>
 
             <label>
-              <span>Base --no tags</span>
+              <span>--no tags</span>
               <textarea rows={2} value={avoid} onChange={(event) => setAvoid(event.target.value)} />
-            </label>
-
-            <label>
-              <span>Additional --no tags</span>
-              <textarea
-                rows={2}
-                value={additionalAvoid}
-                onChange={(event) => setAdditionalAvoid(event.target.value)}
-                placeholder="e.g. extra limbs, cropped feet"
-              />
-              <small>Comma-separated tags are appended without duplicating existing exclusions.</small>
+              <small>Comma-separated exclusions are added to the final Midjourney prompt.</small>
             </label>
           </div>
 
