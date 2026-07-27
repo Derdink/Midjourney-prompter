@@ -162,7 +162,7 @@ h1 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 4px;
-  width: min(360px, 100%);
+  width: 100%;
   padding: 4px;
   margin-bottom: 28px;
   border-radius: 11px;
@@ -195,6 +195,11 @@ h1 {
   border: 1px solid var(--line);
   border-radius: 14px;
   background: linear-gradient(145deg, #f7f8f3, #fbfbf8);
+}
+
+.concept-expander textarea {
+  min-height: 118px;
+  resize: vertical;
 }
 
 .analyser-heading,

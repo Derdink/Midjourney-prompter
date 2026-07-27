@@ -312,6 +312,11 @@ export default function Home() {
     "idle"
   );
   const [analysisMessage, setAnalysisMessage] = useState("");
+  const [conceptBrief, setConceptBrief] = useState("");
+  const [conceptStatus, setConceptStatus] = useState<"idle" | "loading" | "success" | "error">(
+    "idle"
+  );
+  const [conceptMessage, setConceptMessage] = useState("");
   const [promptLength, setPromptLength] = useState<PromptLength>("detailed");
   const [genre, setGenre] = useState("Fantasy");
   const [subgenre, setSubgenre] = useState("High fantasy");
@@ -337,7 +342,7 @@ export default function Home() {
     "photorealism, 3D render, text, watermark, backlight, back light, shadows on face"
   );
   const [ratio, setRatio] = useState("3:2");
-  const [stylize, setStylize] = useState(80);
+  const [stylize, setStylize] = useState(150);
   const [raw, setRaw] = useState(true);
   const [quality, setQuality] = useState<"sd" | "hd">("sd");
   const [copied, setCopied] = useState(false);
@@ -507,6 +512,74 @@ export default function Home() {
     setSubjects((current) => current.filter((subject) => subject.id !== id));
   }
 
+  function applyAnalysis(result: ImageAnalysis) {
+    setComposition(
+      compositionOptions.includes(result.composition) ? result.composition : "Character portrait"
+    );
+    setConcept(result.concept);
+    setDetails(result.details);
+    setAction(result.action);
+    setEnvironment(result.environment);
+    setMood(moodOptions.includes(result.mood) ? result.mood : "Unspecified");
+    setRatio(ratioOptions.includes(result.ratio) ? result.ratio : "3:2");
+
+    const matchedGenre = genreData[result.genre] ? result.genre : "Fantasy";
+    const matchedSubgenre =
+      genreData[matchedGenre].subgenres.find((item) => item.name === result.subgenre) ??
+      genreData[matchedGenre].subgenres[0];
+    const matchedReference =
+      matchedSubgenre.references.find((item) => item.name === result.visualReference) ??
+      matchedSubgenre.references[0];
+    setGenre(matchedGenre);
+    setSubgenre(matchedSubgenre.name);
+    setVisualReference(matchedReference.name);
+
+    const matchedLighting = lightingPresets[result.lightingPreset]
+      ? result.lightingPreset
+      : "Soft frontal key light";
+    setLightingPreset(matchedLighting);
+    if (matchedLighting === "Coloured ambient light" && result.lightingColour) {
+      setLightingColour(result.lightingColour);
+    }
+
+    setSubjects(
+      result.subjects.slice(0, 5).map((subject, index) => ({
+        id: index + 2,
+        role: subject.role,
+        traits: subject.traits,
+        position: subject.position,
+      }))
+    );
+    nextSubject.current = result.subjects.length + 2;
+    setPromptLength("detailed");
+    setPromptEdit({ generated: "", value: "" });
+  }
+
+  async function expandConcept() {
+    const brief = conceptBrief.trim();
+    if (!brief || conceptStatus === "loading") return;
+    setConceptStatus("loading");
+    setConceptMessage("Fleshing out your idea into the prompt template…");
+
+    try {
+      const response = await fetch("/api/expand-concept", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ concept: brief }),
+      });
+      const payload = (await response.json()) as { analysis?: ImageAnalysis; error?: string };
+      if (!response.ok || !payload.analysis) {
+        throw new Error(payload.error || "The concept could not be expanded.");
+      }
+      applyAnalysis(payload.analysis);
+      setConceptStatus("success");
+      setConceptMessage("Template filled. Review or fine-tune any field below.");
+    } catch (error) {
+      setConceptStatus("error");
+      setConceptMessage(error instanceof Error ? error.message : "The concept could not be expanded.");
+    }
+  }
+
   function chooseImage(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -559,46 +632,7 @@ export default function Home() {
         throw new Error(payload.error || "The image could not be analysed.");
       }
 
-      const result = payload.analysis;
-      setComposition(
-        compositionOptions.includes(result.composition) ? result.composition : "Character portrait"
-      );
-      setConcept(result.concept);
-      setDetails(result.details);
-      setAction(result.action);
-      setEnvironment(result.environment);
-      setMood(moodOptions.includes(result.mood) ? result.mood : "Unspecified");
-      setRatio(ratioOptions.includes(result.ratio) ? result.ratio : "3:2");
-
-      const matchedGenre = genreData[result.genre] ? result.genre : "Fantasy";
-      const matchedSubgenre =
-        genreData[matchedGenre].subgenres.find((item) => item.name === result.subgenre) ??
-        genreData[matchedGenre].subgenres[0];
-      const matchedReference =
-        matchedSubgenre.references.find((item) => item.name === result.visualReference) ??
-        matchedSubgenre.references[0];
-      setGenre(matchedGenre);
-      setSubgenre(matchedSubgenre.name);
-      setVisualReference(matchedReference.name);
-
-      const matchedLighting = lightingPresets[result.lightingPreset]
-        ? result.lightingPreset
-        : "Soft frontal key light";
-      setLightingPreset(matchedLighting);
-      if (matchedLighting === "Coloured ambient light" && result.lightingColour) {
-        setLightingColour(result.lightingColour);
-      }
-
-      setSubjects(
-        result.subjects.slice(0, 5).map((subject, index) => ({
-          id: index + 2,
-          role: subject.role,
-          traits: subject.traits,
-          position: subject.position,
-        }))
-      );
-      nextSubject.current = result.subjects.length + 2;
-      setPromptLength("detailed");
+      applyAnalysis(payload.analysis);
       setAnalysisStatus("success");
       setAnalysisMessage("Fields populated. Review anything you want to change.");
     } catch (error) {
@@ -637,6 +671,56 @@ export default function Home() {
               From an image
             </button>
           </div>
+
+          {sourceMode === "concept" && (
+            <section className="image-analyser concept-expander" aria-labelledby="concept-expander-title">
+              <div className="analyser-heading">
+                <div>
+                  <span className="section-number">AI</span>
+                  <strong id="concept-expander-title">Concept expander</strong>
+                </div>
+                <small>Start rough. The AI will structure and enrich it.</small>
+              </div>
+
+              <label>
+                <span>Your idea</span>
+                <textarea
+                  rows={4}
+                  value={conceptBrief}
+                  onChange={(event) => {
+                    setConceptBrief(event.target.value);
+                    if (conceptStatus !== "loading") {
+                      setConceptStatus("idle");
+                      setConceptMessage("");
+                    }
+                  }}
+                  onKeyDown={(event) => {
+                    if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+                      void expandConcept();
+                    }
+                  }}
+                  placeholder="For example: a lonely knight finding a glowing doorway beneath an ancient tree"
+                />
+                <small>Describe the subject, scene, feeling, or story beat in plain language.</small>
+              </label>
+
+              <div className="analyse-row">
+                <button
+                  type="button"
+                  className="analyse-button"
+                  disabled={!conceptBrief.trim() || conceptStatus === "loading"}
+                  onClick={expandConcept}
+                >
+                  {conceptStatus === "loading" ? "Building prompt…" : "Expand and fill fields"}
+                </button>
+                {conceptMessage && (
+                  <p className={`analysis-message ${conceptStatus}`} role="status">
+                    {conceptMessage}
+                  </p>
+                )}
+              </div>
+            </section>
+          )}
 
           {sourceMode === "image" && (
             <section className="image-analyser" aria-labelledby="image-analyser-title">
