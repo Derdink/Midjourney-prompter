@@ -1,5 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import {
+  buildCharacterBlock,
+  compositionFraming,
+} from "../app/prompt-structure.mjs";
 
 const developmentPreviewMeta =
   /<meta(?=[^>]*\bname=["']codex-preview["'])(?=[^>]*\bcontent=["']development["'])[^>]*>/i;
@@ -30,4 +34,28 @@ test("renders development preview metadata", async () => {
     /^text\/html\b/i,
   );
   assert.match(await response.text(), developmentPreviewMeta);
+});
+
+test("keeps primary character details before additional characters without duplicates", () => {
+  const primaryConcept = "A veteran elven ranger.";
+  const primaryDetails = "Weathered green cloak and dark braided hair.";
+  const additionalCharacter = "The young scout on the right is carrying a lantern.";
+  const prompt = buildCharacterBlock(
+    [primaryConcept, primaryDetails, primaryDetails],
+    "2 different characters arranged in a two-character scene.",
+    [additionalCharacter],
+  );
+
+  assert.ok(prompt.indexOf(primaryConcept) < prompt.indexOf(additionalCharacter));
+  assert.ok(prompt.indexOf(primaryDetails) < prompt.indexOf(additionalCharacter));
+  assert.equal(prompt.match(/Weathered green cloak and dark braided hair\./g)?.length, 1);
+});
+
+test("adds explicit uncropped head-to-feet framing for full-body compositions", () => {
+  const framing = compositionFraming("Full-body character");
+
+  assert.match(framing, /top of the head to both feet/i);
+  assert.match(framing, /both feet fully inside the frame/i);
+  assert.match(framing, /no cropping/i);
+  assert.equal(compositionFraming("Character portrait"), "");
 });

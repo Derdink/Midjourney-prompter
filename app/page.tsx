@@ -1,6 +1,7 @@
 "use client";
 
 import { ChangeEvent, useMemo, useRef, useState } from "react";
+import { buildCharacterBlock, compositionFraming } from "./prompt-structure.mjs";
 
 type SourceMode = "concept" | "image";
 type AnalysisMode = "likeness" | "reproduce" | "copy";
@@ -320,25 +321,25 @@ export default function Home() {
       subgenreEntry.references[0];
     const subjectLead = sentence(visibleRewrite(concept));
     const attached = sentence(visibleRewrite(details));
-    const subjectBlock =
+    const additionalCharacters = subjects.map((subject) =>
+      sentence(
+        `The ${subject.role || `character ${subject.id}`} ${
+          subject.position ? `on the ${subject.position}` : ""
+        } is ${visibleRewrite(subject.traits)}`
+      )
+    );
+    const groupIntroduction =
       subjects.length > 0
-        ? [
-            sentence(
-              `${subjects.length + 1} different characters arranged in a ${composition.toLowerCase()}`
-            ),
-            subjectLead,
-            ...subjects.map((subject) =>
-              sentence(
-                `The ${subject.role || `character ${subject.id}`} ${
-                  subject.position ? `on the ${subject.position}` : ""
-                } is ${visibleRewrite(subject.traits)}`
-              )
-            ),
-            attached,
-          ]
-            .filter(Boolean)
-            .join(" ")
-        : [subjectLead, attached].filter(Boolean).join(" ");
+        ? sentence(
+            `${subjects.length + 1} different characters arranged in a ${composition.toLowerCase()}`
+          )
+        : "";
+    const subjectBlock = buildCharacterBlock(
+      [subjectLead, attached],
+      groupIntroduction,
+      additionalCharacters
+    );
+    const framingLine = sentence(compositionFraming(composition));
 
     const actionLed = ["Action scene", "Creature encounter", "Two-character scene", "Party scene"].includes(
       composition
@@ -387,7 +388,8 @@ export default function Home() {
     if (promptLength === "concise") {
       const concisePrompt = [
         sentence(`${composition} composition`),
-        subjectLead,
+        framingLine,
+        subjectBlock,
         sentence(visibleRewrite(action)),
         mood !== "Unspecified" ? `${mood.toLowerCase()} atmosphere.` : "",
         style,
@@ -397,7 +399,9 @@ export default function Home() {
       return `${concisePrompt} ${params}`.replace(/\s+/g, " ").trim();
     }
 
-    return `${[subjectBlock, lightingLine, scene, aesthetic].filter(Boolean).join(" ")} ${params}`
+    return `${[framingLine, subjectBlock, lightingLine, scene, aesthetic]
+      .filter(Boolean)
+      .join(" ")} ${params}`
       .replace(/\s+/g, " ")
       .trim();
   }, [
