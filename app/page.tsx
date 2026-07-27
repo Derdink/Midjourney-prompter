@@ -177,6 +177,18 @@ const moodOptions = [
   "Serene",
   "Brutal",
   "Wonder",
+  "Joyful",
+  "Hopeful",
+  "Triumphant",
+  "Tense",
+  "Uneasy",
+  "Mysterious",
+  "Ethereal",
+  "Whimsical",
+  "Romantic",
+  "Nostalgic",
+  "Desolate",
+  "Dreamlike",
 ];
 
 const lightingPresets: Record<string, LightingPreset> = {

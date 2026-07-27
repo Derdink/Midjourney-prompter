@@ -18,6 +18,18 @@ const moodOptions = [
   "Serene",
   "Brutal",
   "Wonder",
+  "Joyful",
+  "Hopeful",
+  "Triumphant",
+  "Tense",
+  "Uneasy",
+  "Mysterious",
+  "Ethereal",
+  "Whimsical",
+  "Romantic",
+  "Nostalgic",
+  "Desolate",
+  "Dreamlike",
 ] as const;
 
 const lightingOptions = [
