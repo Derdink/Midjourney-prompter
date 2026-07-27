@@ -30,6 +30,14 @@ const moodOptions = [
   "Nostalgic",
   "Desolate",
   "Dreamlike",
+  "Sinister",
+  "Malevolent",
+  "Infernal",
+  "Corrupted",
+  "Unholy",
+  "Predatory",
+  "Apocalyptic",
+  "Dread",
 ] as const;
 
 const lightingOptions = [

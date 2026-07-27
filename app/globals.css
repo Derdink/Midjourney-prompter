@@ -610,7 +610,10 @@ select:focus {
 }
 
 .prompt-box {
+  display: block;
+  width: 100%;
   min-height: 220px;
+  box-sizing: border-box;
   margin: 24px 0 14px;
   padding: 20px;
   border: 1px solid var(--line-dark);
@@ -621,6 +624,13 @@ select:focus {
   font-size: 12px;
   line-height: 1.78;
   overflow-wrap: anywhere;
+  resize: vertical;
+}
+
+.prompt-box:focus {
+  border-color: #71806f;
+  outline: 2px solid rgba(113, 128, 111, 0.28);
+  outline-offset: 2px;
 }
 
 .health {

@@ -189,6 +189,14 @@ const moodOptions = [
   "Nostalgic",
   "Desolate",
   "Dreamlike",
+  "Sinister",
+  "Malevolent",
+  "Infernal",
+  "Corrupted",
+  "Unholy",
+  "Predatory",
+  "Apocalyptic",
+  "Dread",
 ];
 
 const lightingPresets: Record<string, LightingPreset> = {
@@ -298,7 +306,7 @@ export default function Home() {
     "idle"
   );
   const [analysisMessage, setAnalysisMessage] = useState("");
-  const [promptLength, setPromptLength] = useState<PromptLength>("concise");
+  const [promptLength, setPromptLength] = useState<PromptLength>("detailed");
   const [genre, setGenre] = useState("Fantasy");
   const [subgenre, setSubgenre] = useState("High fantasy");
   const [visualReference, setVisualReference] = useState("The Lord of the Rings");
@@ -327,6 +335,7 @@ export default function Home() {
   const [quality, setQuality] = useState<"sd" | "hd">("sd");
   const [copied, setCopied] = useState(false);
   const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [promptEdit, setPromptEdit] = useState({ generated: "", value: "" });
   const nextSubject = useRef(2);
 
   const prompt = useMemo(() => {
@@ -445,6 +454,8 @@ export default function Home() {
     visualReference,
   ]);
 
+  const editablePrompt = promptEdit.generated === prompt ? promptEdit.value : prompt;
+
   const availableSubgenres = genreData[genre].subgenres;
   const activeSubgenre =
     availableSubgenres.find((item) => item.name === subgenre) ?? availableSubgenres[0];
@@ -462,7 +473,7 @@ export default function Home() {
     if (selected) setVisualReference(selected.references[0].name);
   }
 
-  const charCount = prompt.length;
+  const charCount = editablePrompt.length;
   const risk =
     charCount > 1024
       ? "Prompt Shortener will activate"
@@ -592,7 +603,7 @@ export default function Home() {
   }
 
   async function copyPrompt() {
-    await navigator.clipboard.writeText(prompt);
+    await navigator.clipboard.writeText(editablePrompt);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1800);
   }
@@ -866,7 +877,7 @@ export default function Home() {
         <aside className="output-panel">
           <div className="output-head">
             <div>
-              <p className="eyebrow">Generated prompt</p>
+              <p className="eyebrow">Editable prompt</p>
               <h2>Ready for Midjourney</h2>
             </div>
             <button className="copy-button" onClick={copyPrompt}>
@@ -893,7 +904,12 @@ export default function Home() {
             </button>
           </div>
 
-          <div className="prompt-box">{prompt}</div>
+          <textarea
+            className="prompt-box"
+            aria-label="Editable Midjourney prompt"
+            value={editablePrompt}
+            onChange={(event) => setPromptEdit({ generated: prompt, value: event.target.value })}
+          />
 
           <div className={`health ${riskLevel}`}>
             <div>
